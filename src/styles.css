@@ -103,6 +103,7 @@ button {
 
 .task span {
   flex-grow: 1;
+  word-break: break-all;
 }
 
 .task button {
