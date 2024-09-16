@@ -10,14 +10,13 @@ export const TaskContext = createContext();
 
 export default function App() {
   const [tasks, setTasks] = useState([]);
-  const [completedTasks, setCompletedTasks] = useState([]);
   const isFirstRender = useRef(true);
   function handleAdd(newTask) {
-    if (tasks.includes(newTask)) {
+    if (tasks.filter((task) => task.text === newTask.text).length) {
       alert("Task already exists");
       return;
     }
-    if (!newTask) {
+    if (!newTask.text) {
       alert("Empty task");
       return;
     }
@@ -28,10 +27,8 @@ export default function App() {
     if (!localStorage) return;
     let localTasks = localStorage.getItem("tasks");
     if (!localTasks) return;
-    let localCompletedTasks = JSON.parse(localTasks).completedTasks;
     localTasks = JSON.parse(localTasks).tasks;
     setTasks(localTasks);
-    setCompletedTasks(localCompletedTasks);
   }, []);
 
   useEffect(() => {
@@ -40,19 +37,20 @@ export default function App() {
       return;
     }
     if (localStorage) {
-      localStorage.setItem("tasks", JSON.stringify({ tasks, completedTasks }));
+      localStorage.setItem("tasks", JSON.stringify({ tasks }));
     }
-  }, [tasks, completedTasks]);
+  }, [tasks]);
 
   function handleCompleteAll() {
-    setCompletedTasks(tasks);
+    setTasks((tasks) => {
+      let updatedTasks = tasks.map((task) => ({ ...task, isCompleted: true }));
+      return updatedTasks;
+    });
   }
 
   return (
     <div className="container">
-      <TaskContext.Provider
-        value={{ setTasks, setCompletedTasks, completedTasks }}
-      >
+      <TaskContext.Provider value={{ setTasks }}>
         <TodoInput add={handleAdd} />
         <TodoList tasks={tasks} />
       </TaskContext.Provider>

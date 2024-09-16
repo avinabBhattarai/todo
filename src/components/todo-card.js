@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState } from "react";
 import { TaskContext } from "../App";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faUndo } from "@fortawesome/free-solid-svg-icons";
@@ -6,33 +6,23 @@ import { faEdit } from "@fortawesome/free-regular-svg-icons";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
 export default function TodoCard({ task }) {
-  const [edit, setEdit] = useState(task);
-  const [isComplete, setIsComplete] = useState(false);
+  const [edit, setEdit] = useState(task.text);
   const [isEdit, setIsEdit] = useState(false);
-  const { setTasks, setCompletedTasks, completedTasks } =
-    useContext(TaskContext);
+  const { setTasks } = useContext(TaskContext);
   function handleDelete() {
-    setTasks((t) => t.filter((itask) => task !== itask));
-    setCompletedTasks((c) => c.filter((t) => t !== task));
+    setTasks((tasks) => tasks.filter((t) => task.id !== t.id));
   }
   function handleEdit() {
     setIsEdit(true);
   }
   function handleCheck() {
-    if (!isComplete) {
-      setCompletedTasks((c) => [...c, task]);
-    } else {
-      setCompletedTasks((c) => c.filter((t) => t !== task));
-    }
-    setIsComplete((i) => !i);
+    setTasks((tasks) => {
+      const updatedTasks = tasks.map((t) =>
+        t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t
+      );
+      return updatedTasks;
+    });
   }
-  useEffect(() => {
-    if (completedTasks.includes(task)) {
-      setIsComplete(true);
-    } else {
-      setIsComplete(false);
-    }
-  }, [completedTasks, task]);
   return (
     <>
       {isEdit ? (
@@ -45,13 +35,22 @@ export default function TodoCard({ task }) {
           />
           <button
             onClick={() => {
-              setTasks((t) => {
-                if (t.includes(edit) && task !== edit) {
+              setTasks((tasks) => {
+                if (
+                  tasks.filter((t) => t.text === edit).length &&
+                  task.text !== edit
+                ) {
                   alert("Task already exists!");
-                  setEdit(task);
-                  return t;
+                  setEdit(task.text);
+                  return tasks;
+                } else if (edit === "") {
+                  alert("Task cannot be empty!");
+                  setEdit(task.text);
+                  return tasks;
                 } else {
-                  return t.map((itask) => (task === itask ? edit : itask));
+                  return tasks.map((t) =>
+                    task.id === t.id ? { ...task, text: edit } : t
+                  );
                 }
               });
               setIsEdit(false);
@@ -62,9 +61,9 @@ export default function TodoCard({ task }) {
         </li>
       ) : (
         <li className="task">
-          {!isComplete ? (
+          {!task.isCompleted ? (
             <>
-              <span>{task}</span>
+              <span>{task.text}</span>
               <button onClick={handleEdit}>
                 <FontAwesomeIcon icon={faEdit} />
               </button>
@@ -74,7 +73,9 @@ export default function TodoCard({ task }) {
             </>
           ) : (
             <>
-              <span style={{ textDecoration: "line-through" }}>{task}</span>
+              <span style={{ textDecoration: "line-through" }}>
+                {task.text}
+              </span>
               <button onClick={handleCheck}>
                 <FontAwesomeIcon icon={faUndo} />
               </button>
